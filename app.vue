@@ -1,5 +1,5 @@
 <template>
-  <div class="pa4">
+  <div class="pa2 pa4-l">
     <NuxtPage />
   </div>
 </template>

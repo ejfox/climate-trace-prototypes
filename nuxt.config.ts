@@ -2,4 +2,9 @@
 export default defineNuxtConfig({
   // add tachyons
   css: ['tachyons/css/tachyons.css'],
+  modules: [
+    '@pinia/nuxt',
+    '@vueuse/nuxt'
+  ]
 })
+  
