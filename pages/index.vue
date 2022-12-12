@@ -30,7 +30,7 @@
 
     <div class="pa2 w-100 f2 lh-title db">
       <h2>Concept 2: 
-      <NuxtLink  to="/cart">Assets around me</NuxtLink>
+      <NuxtLink  to="/aroundme">Assets around me</NuxtLink>
       </h2>
 
       <p>

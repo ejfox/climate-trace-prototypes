@@ -39,6 +39,30 @@
           on the entire dataset because of its size.
         </p>
 
+        <p><a href="https://climate-trace-assets.fly.dev/ct-all-sectors">Prototype datasette instance hosted on fly</a></p>
+
+        <!-- <p class="inputs">
+      <span class="blue">Inputs: latitude/longitude of center, radius of search in miles/km</span>
+    </p>
+
+    <p class="outputs">
+      <span class="red">A list of asset IDs within the search radius</span>
+    </p> -->
+      </div>
+    </div>
+
+    <div class=" w-50 fl db">
+      <div class="pa3 ba b--light-gray">
+        <h2 class="mv0 pv0">Include null values for known but un-measured facilities</h2>
+
+        <p class="what">
+          It would be great to receive null values for facilities that are known to exist, but for which no data has been collected. It would additionally be helpful to know the reason for the lack of data.
+        </p>
+
+        <p class="why">
+          Users sometimes expect to see certain facilities that may be too small to be included in the dataset. It would be helpful to know that these facilities are not included in the dataset, if they might be in the future, and why they weren't included.
+        </p>
+
         <!-- <p class="inputs">
       <span class="blue">Inputs: latitude/longitude of center, radius of search in miles/km</span>
     </p>
