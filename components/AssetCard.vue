@@ -3,9 +3,9 @@
     <div class="pa2 ba b--moon-gray">
     <h3 class="mv0">{{asset.properties.Name}}</h3>
     <h3 class="mv0 moon-gray">{{asset.properties.Sector}}</h3>
-    <pre class="f6 mono bg-light-gray mv3 br3 pa1">{{asset}}</pre>
+    <pre class="overflow-x-auto f6 mono bg-light-gray mv3 br3 pa1">{{asset}}</pre>
 
-    <pre class="f6 mono bg-dark-gray white mv3 br3 pa1">{{emissions}}</pre>
+    <pre class="overflow-x-auto f6 mono bg-dark-gray white mv3 br3 pa1">{{emissions}}</pre>
   </div>
   </div>
 </template>

@@ -2,10 +2,12 @@
   <div class="bb pb3 mb3 f5">
 <!-- <pre>{{globalEmissionsBySector}}</pre> -->
 <h2 class="mv1">Global emissions by sector</h2>
-<h2 class="red">Total cart emissions: {{cartTotal}}</h2>
+<!-- <h2 class="red">Total cart emissions: {{cartTotal}}</h2> -->
+<table class="w-100">
 <tr v-for="sector in globalEmissionsBySector"
-  :key="sector.Sector">
-  <td>{{sector.Sector}}</td> 
+  :key="sector.Sector"
+  class="stripe-dark">
+  <td class="dark-gray">{{sector.Sector}}</td> 
   <!-- <td>{{emissionsNumberFormat(sector.Emissions)}}</td> -->
   <!-- add the remainder for that sector -->
   <!-- <td>{{getSectorRemainder(sector.Sector)}}</td> -->
@@ -23,6 +25,8 @@
       <td>Remaining</td>
       <td>{{emissionsNumberFormat(remainingEmissions)}}</td>
     </tr>
+
+  </table>
 </div>
 </template>
 <script setup>

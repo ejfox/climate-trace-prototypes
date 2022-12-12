@@ -20,18 +20,19 @@
     <div class="location-input">
       <!-- <label for="location">Location</label>
       <input type="text" id="location" name="location" /> -->
+      <span id="radius">
+        <label for="radius">Radius in miles</label>
 
-      <label for="radius">Radius in miles</label>
-
-      <!-- use a v-model for the search radius -->
-      <input type="number" id="radius" name="radius" v-model="radius" />
+        <!-- use a v-model for the search radius -->
+        <input type="number" id="radius-input" name="radius" v-model="radius" />
+      </span>
 
       <!-- <button>Search</button> -->
     </div>
 
     <div class="location-results mt5" v-if="nearAssets">
       <!-- make a table of the returned assets and their distance from the user -->
-      <table class="measure ba b--gray pa3">
+      <!-- <table class="w-100 ba b--gray pa3">
         <thead>
           <tr class="bg-dark-gray white">
             <th class="w-50 tl">Asset ID</th>
@@ -44,13 +45,11 @@
             <td>{{ Math.round(asset.distance) }} miles</td>
           </tr>
         </tbody>
-      </table>
+      </table> -->
 
       <!-- create an AssetCard for every asset -->
-      <div class="cards w-80 center mt5">
-        <AssetCard v-for="asset in nearAssets" :key="asset.asset_id" :assetId="asset.asset_id" 
-        class="w-50 fl pa2"
-        />
+      <div class="cards w-100 center mt2">
+        <AssetCard v-for="asset in nearAssets" :key="asset.asset_id" :assetId="asset.asset_id" class="w-50 fl pa2" />
       </div>
 
     </div>
@@ -75,7 +74,7 @@ To get the results in JSON, we request the following URL:
 https://climate-trace-assets.fly.dev/ct-all-sectors.json?sql=SELECT+asset_id%2C+geom+%0D%0AFROM+all_assets_combined+%0D%0AWHERE+within%28GeomFromText%28geom%29%2C+PolygonFromText%28%27POLYGON%28%28-127.1825+24.4286%2C+-66.9266+24.4286%2C+-66.9266+49.3845%2C+-127.1825+49.3845%2C+-127.1825+24.4286%29%29%27%29%29+%0D%0AAND+date%28start_time%29+%3E%3D+%272021-01-01%27+%0D%0A&_shape=array
 */
 
-const radius = ref(80)
+const radius = ref(200)
 
 const nearAssets = ref(null)
 
@@ -83,7 +82,10 @@ const searchResult = ref(null)
 
 const map = ref(null)
 
-onMounted(() => {  
+const maxAssetsReturned = ref(50)
+
+const markers = ref([])
+onMounted(() => {
 
   const mapboxglAccessToken = 'pk.eyJ1IjoiZWpmb3giLCJhIjoiY2lyZjd0bXltMDA4b2dma3JzNnA0ajh1bSJ9.iCmlE7gmJubz2RtL4RFzIw';
 
@@ -116,7 +118,7 @@ onMounted(() => {
       color: 'red'
     })
       .setLngLat(e.result.geometry.coordinates)
-      .addTo(map.value)      
+      .addTo(map.value)
 
 
 
@@ -159,6 +161,9 @@ onMounted(() => {
     // Make the query URL
     const url = makeQueryUrl(e.result.geometry.coordinates, wkt)
 
+    // hide the #radius input
+    document.getElementById('radius').style.display = 'none'
+
     // Fetch the data
     fetch(url)
       .then(response => response.json())
@@ -184,13 +189,13 @@ onMounted(() => {
           }
         })
 
-        // add the assets to the map as markers
-        assetsWithDistance.forEach(asset => {
-          const assetPoint = parse(asset.geom)
-          const marker = new mapboxgl.Marker()
-            .setLngLat(assetPoint.coordinates)
-            .addTo(map.value)
-        })
+        // // add the assets to the map as markers
+        // assetsWithDistance.forEach(asset => {
+        //   const assetPoint = parse(asset.geom)
+        //   const marker = new mapboxgl.Marker()
+        //     .setLngLat(assetPoint.coordinates)
+        //     .addTo(map.value)
+        // })
 
 
 
@@ -203,6 +208,29 @@ onMounted(() => {
       })
   });
 
+
+  // we will use a watcher to keep assetsWithDistance synced with the mapbox map
+  watch(nearAssets, (newAssets) => {
+    console.log('nearAssets changed', newAssets)
+
+    // remove the existing markers
+    markers.value.forEach(marker => marker.remove())
+
+    // clear the markers array
+    markers.value = []
+
+    // add the assets to the map as markers
+    newAssets.forEach(asset => {
+      const assetPoint = parse(asset.geom)
+      const marker = new mapboxgl.Marker()
+        .setLngLat(assetPoint.coordinates)
+        .addTo(map.value)
+      markers.value.push(marker)
+    })
+
+  })
+
+
   // Clear results container when search is cleared.
   geocoder.on('clear', () => {
     results.innerText = '';
@@ -212,6 +240,14 @@ onMounted(() => {
     map.value.removeSource('circle')
     map.value.removeLayer('nearAssets')
     map.value.removeSource('nearAssets')
+
+    // clear the nearAssets v-model
+    nearAssets.value = null
+
+    // clear the searchResult v-model
+    searchResult.value = null
+
+
 
   });
 
@@ -223,7 +259,7 @@ function makeQueryUrl(location, circleWKT) {
     sql: `SELECT asset_id, geom
 FROM all_assets_combined
 WHERE within(GeomFromText(geom), PolygonFromText('${circleWKT}'))
-AND date(start_time) >= '2021-01-01' LIMIT 25`,
+AND date(start_time) >= '2021-01-01' LIMIT ${maxAssetsReturned.value}`,
     _shape: 'array'
   }
   url.search = new URLSearchParams(params).toString()
@@ -250,8 +286,9 @@ function convertGeojsonToWkt(geojson) {
   width: 100%;
   height: 48vh;
 }
+
 #geocoder input {
-  width: 100%;
+  /* width: 100%; */
   padding: 0.5rem;
 }
 
@@ -266,7 +303,7 @@ function convertGeojsonToWkt(geojson) {
 
 .mapboxgl-ctrl-geocoder--suggestions {
   font-size: 1em;
-  width: 100%;
-  display: block;
+  /* width: 100%; */
+  /* display: block; */
 }
 </style>
