@@ -78,7 +78,7 @@ const selectedSectors = ref(['oil-and-gas-refining'])
 const remoteListUrl = computed(() => {
   const countries = selectedCountries.value//.map((country) => country.alpha3)
   const sector = selectedSectors.value
-  return `https://api.dev.climatetrace.org/v0/assets?limit=100&offset=0&countries=${countries}&sectors=${sector}`
+  return `https://api.next.climatetrace.org/v0/assets?limit=100&offset=0&countries=${countries}&sectors=${sector}`
 })
 
 
@@ -93,14 +93,14 @@ onMounted(() => {
   //   });
 
   // get list of available countries from https://api.dev.climatetrace.org/v3/definitions/countries
-  fetch('https://api.dev.climatetrace.org/v3/definitions/countries')
+  fetch('https://api.climatetrace.org/v3/definitions/countries')
     .then((response) => response.json())
     .then((data) => {
       availableCountries.value = data
     })
 
-  // get a list of available sectors from https://api.dev.climatetrace.org/v3/definitions/sectors
-  fetch('https://api.dev.climatetrace.org/v0/definitions/sectors')
+  // get a list of available sectors from https://api.next.climatetrace.org/v3/definitions/sectors
+  fetch('https://api.climatetrace.org/v0/definitions/sectors')
     .then((response) => response.json())
     .then((data) => {
       availableSectors.value = data

@@ -1,5 +1,8 @@
 <template>
-  <div class="pa3 f4 sans-serif fw6">
+  <div class="pa3 f6 sans-serif fw6">
+    <GlobalEmissions 
+      :cart-total="totalCartEmissions"
+      />
   <div>Shopping cart</div>
   <!-- <pre class="bg-black white f6">
     {{props.list}}
@@ -10,6 +13,7 @@
     <h3 class="mv0">{{item.properties.Name}}</h3>
     <h4 class="mv0 gray">
       <strong class="light-red">{{ co2NumberFormat(item.properties['EmissionValue'])}}</strong> tons co2, 100yr</h4>
+      <small class="db">{{item.properties.Sector}}</small>
     <button @click="removeFromShoppingCart(item)">Remove</button>
   </div>
 
@@ -22,14 +26,14 @@
   </div>
 </template>
 <script setup>
-import { format } from 'd3'
+import { emissionsNumberFormat } from '~/helpers'
 import { useShoppingCartStore } from '~/store/shoppingcart'
 
 const shoppingCart = useShoppingCartStore()
 
 const list = computed(() => shoppingCart.items)
 
-const co2NumberFormat = format(',.8r')
+const co2NumberFormat = emissionsNumberFormat
 // define shoppingCartList array as prop
 // const props = defineProps({
 //   list: {
