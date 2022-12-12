@@ -5,6 +5,10 @@
       This page will show you the assets with the most emissions near you.
     </p>
 
+    <div id="map">
+
+    </div>
+
     <div id="geocoder">
 
     </div>
@@ -17,10 +21,10 @@
       <!-- <label for="location">Location</label>
       <input type="text" id="location" name="location" /> -->
 
-      <!-- <label for="radius">Radius in miles</label> -->
+      <label for="radius">Radius in miles</label>
 
       <!-- use a v-model for the search radius -->
-      <!-- <input type="number" id="radius" name="radius" v-model="radius" /> -->
+      <input type="number" id="radius" name="radius" v-model="radius" />
 
       <!-- <button>Search</button> -->
     </div>
@@ -43,9 +47,9 @@
       </table>
 
       <!-- create an AssetCard for every asset -->
-      <div class="cards">
+      <div class="cards w-80 center mt5">
         <AssetCard v-for="asset in nearAssets" :key="asset.asset_id" :assetId="asset.asset_id" 
-        class="w-50 fl"
+        class="w-50 fl pa2"
         />
       </div>
 
@@ -54,8 +58,11 @@
 </template>
 <script setup>
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import mapboxgl from 'mapbox-gl';
 import { stringify, parse } from 'wkt'
-import { circle, distance } from '@turf/turf'
+import { circle, distance, bbox } from '@turf/turf'
+import 'mapbox-gl/dist/mapbox-gl.css';
+
 /*
 We are going to execute a query like this:
 
@@ -74,10 +81,20 @@ const nearAssets = ref(null)
 
 const searchResult = ref(null)
 
-onMounted(() => {
+const map = ref(null)
+
+onMounted(() => {  
 
   const mapboxglAccessToken = 'pk.eyJ1IjoiZWpmb3giLCJhIjoiY2lyZjd0bXltMDA4b2dma3JzNnA0ajh1bSJ9.iCmlE7gmJubz2RtL4RFzIw';
 
+  // create the map
+  map.value = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    accessToken: mapboxglAccessToken,
+    center: [-74.5, 40],
+    zoom: 9
+  });
 
   const geocoder = new MapboxGeocoder({
     accessToken: mapboxglAccessToken,
@@ -94,8 +111,47 @@ onMounted(() => {
     results.innerText = JSON.stringify(e.result.geometry, null, 2);
     searchResult.value = e.result
 
+    // add the resulting point as a red marker to the map
+    const marker = new mapboxgl.Marker({
+      color: 'red'
+    })
+      .setLngLat(e.result.geometry.coordinates)
+      .addTo(map.value)      
+
+
+
     // Make a circle from the location return and radius v-model
     const circle = makeCircleFromPoint(e.result.geometry.coordinates)
+
+    // add the circle to the map as a geojson layer
+    map.value.addSource('circle', {
+      type: 'geojson',
+      data: circle
+    })
+
+    map.value.addLayer({
+      id: 'circle',
+      type: 'fill',
+      source: 'circle',
+      paint: {
+        'fill-color': 'yellow',
+        'fill-opacity': 0.8
+      }
+    })
+
+    // fly map to point
+    map.value.flyTo({
+      center: e.result.geometry.coordinates,
+      zoom: 8
+    })
+
+    // get bbox of the circle from turf
+    const circleBounds = bbox(circle)
+
+    // zoom map to circle
+    map.value.fitBounds(circleBounds, {
+      padding: 20
+    })
 
     // Convert the circle into WKT
     const wkt = convertGeojsonToWkt(circle)
@@ -128,6 +184,16 @@ onMounted(() => {
           }
         })
 
+        // add the assets to the map as markers
+        assetsWithDistance.forEach(asset => {
+          const assetPoint = parse(asset.geom)
+          const marker = new mapboxgl.Marker()
+            .setLngLat(assetPoint.coordinates)
+            .addTo(map.value)
+        })
+
+
+
         // sort the assets by distance
         const sortedAssets = assetsWithDistance.sort((a, b) => a.distance - b.distance)
 
@@ -140,6 +206,13 @@ onMounted(() => {
   // Clear results container when search is cleared.
   geocoder.on('clear', () => {
     results.innerText = '';
+
+    // clear the geojson layer and all the markers
+    map.value.removeLayer('circle')
+    map.value.removeSource('circle')
+    map.value.removeLayer('nearAssets')
+    map.value.removeSource('nearAssets')
+
   });
 
 })
@@ -149,7 +222,7 @@ function makeQueryUrl(location, circleWKT) {
   const params = {
     sql: `SELECT asset_id, geom
 FROM all_assets_combined
-WHERE within(GeomFromText(geom), PolygonFromText('${circleWKT}}'))
+WHERE within(GeomFromText(geom), PolygonFromText('${circleWKT}'))
 AND date(start_time) >= '2021-01-01' LIMIT 25`,
     _shape: 'array'
   }
@@ -162,7 +235,7 @@ AND date(start_time) >= '2021-01-01' LIMIT 25`,
 function makeCircleFromPoint(point) {
   // radius in miles
   const [lng, lat] = point
-  const geoJsonCircle = circle([lng, lat], radius.value, { steps: 32, units: 'miles' })
+  const geoJsonCircle = circle([lng, lat], radius.value, { steps: 8, units: 'miles' })
   console.log(JSON.stringify(geoJsonCircle))
   return geoJsonCircle
 }
@@ -173,6 +246,10 @@ function convertGeojsonToWkt(geojson) {
 
 </script>
 <style>
+#map {
+  width: 100%;
+  height: 48vh;
+}
 #geocoder input {
   width: 100%;
   padding: 0.5rem;
